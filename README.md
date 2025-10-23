@@ -1,61 +1,160 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Steadfast Webhook Integration
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Simple Laravel webhook integration to receive real-time delivery updates from Steadfast Courier.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **PHP**: ^8.2
+- **Laravel Framework**: ^12.0
+- **MySQL/MariaDB**: Database server
+- **Composer**: Dependency manager
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Setup
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 1. Configuration
+Set your webhook token in `.env`:
+```env
+STEADFAST_WEBHOOK_TOKEN=test_webhook_token_123
+```
 
-## Learning Laravel
+Or update the token in `config/steadfast.php` file.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. Database
+Run migrations to create orders table:
+```bash
+php artisan migrate
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 3. Webhook URL
+Configure this endpoint in your Steadfast dashboard:
+```
+https://brittany-uneduced-laurinda.ngrok-free.dev/api/webhooks/steadfast
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+For local development, use ngrok to expose your Laravel server:
+```bash
+php artisan serve
+ngrok http 8000
+```
 
-## Laravel Sponsors
+## Webhook Details
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Endpoint
+- **URL**: `/api/webhooks/steadfast`
+- **Method**: `POST`
+- **Authentication**: Bearer Token
+- **Content-Type**: `application/json`
 
-### Premium Partners
+### Supported Notifications
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+#### 1. Delivery Status
+Updates order status, COD amount, and delivery charges.
 
-## Contributing
+**Payload Example:**
+```json
+{
+    "notification_type": "delivery_status",
+    "consignment_id": 12345,
+    "invoice": "INV-67890",
+    "cod_amount": 1500.00,
+    "status": "delivered",
+    "delivery_charge": 100.00,
+    "tracking_message": "Package delivered successfully",
+    "updated_at": "2025-03-02 12:45:30"
+}
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+#### 2. Tracking Update
+Updates only tracking message and timestamp.
 
-## Code of Conduct
+**Payload Example:**
+```json
+{
+    "notification_type": "tracking_update",
+    "consignment_id": 12345,
+    "invoice": "INV-67890",
+    "tracking_message": "Package arrived at sorting center",
+    "updated_at": "2025-03-02 13:15:00"
+}
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Responses
 
-## Security Vulnerabilities
+**Success:**
+```json
+{
+    "status": "success",
+    "message": "Webhook received successfully."
+}
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+**Error:**
+```json
+{
+    "status": "error",
+    "message": "Error description"
+}
+```
 
-## License
+## Files & Business Logic
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Route Configuration
+- **File**: `routes/api.php`
+- **Endpoint**: `POST /api/webhooks/steadfast`
+- **Handler**: `SteadfastWebhookController@handleSteadFastWebhook`
+
+### Business Logic Location
+- **Main Controller**: `app/Http/Controllers/SteadfastWebhookController.php`
+  - `handleSteadFastWebhook()` - Main webhook handler with authentication
+  - `validatePayload()` - Laravel validation for webhook data
+  - `processPayload()` - **Business logic for updating orders**
+  
+### Key Components
+- **Model**: `app/Models/Order.php` - Database interactions
+- **Config**: `config/steadfast.php` - Webhook token configuration
+- **Migration**: `database/migrations/2025_10_23_140011_create_orders_table.php` - Database schema
+
+### Customize Business Logic
+To modify how orders are updated, edit the `processPayload()` method in:
+```
+app/Http/Controllers/SteadfastWebhookController.php
+```
+
+## Testing
+
+### Case 1: Delivery Status
+Test delivery status webhook with curl:
+```bash
+curl -X POST https://brittany-uneduced-laurinda.ngrok-free.dev/api/webhooks/steadfast \
+  -H "Authorization: Bearer test_webhook_token_123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notification_type": "delivery_status",
+    "consignment_id": 12345,
+    "invoice": "INV-67890",
+    "cod_amount": 1500.00,
+    "status": "delivered",
+    "delivery_charge": 100.00,
+    "tracking_message": "Package delivered successfully",
+    "updated_at": "2025-03-02 12:45:30"
+  }'
+```
+
+### Case 2: Tracking Update
+Test tracking update webhook with curl:
+```bash
+curl -X POST https://brittany-uneduced-laurinda.ngrok-free.dev/api/webhooks/steadfast \
+  -H "Authorization: Bearer test_webhook_token_123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notification_type": "tracking_update",
+    "consignment_id": 12345,
+    "invoice": "INV-67890",
+    "tracking_message": "Package arrived at sorting center",
+    "updated_at": "2025-03-02 13:15:00"
+  }'
+```
+
+## References
+
+- **Steadfast Webhook Documentation**: https://www.steadfast.com.bd/user/webhook/add
