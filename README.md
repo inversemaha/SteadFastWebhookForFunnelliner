@@ -155,6 +155,13 @@ curl -X POST https://brittany-uneduced-laurinda.ngrok-free.dev/api/webhooks/stea
   }'
 ```
 
+## Future Enhancements
+
+### Real-time Updates with Pusher
+- **Pusher Integration**: Broadcast webhook events to frontend in real-time
+- **Live Dashboard**: Instant order status updates in user interface
+- **Event Broadcasting**: Push delivery notifications to connected clients
+
 ## References
 
 - **Steadfast Webhook Documentation**: https://www.steadfast.com.bd/user/webhook/add
