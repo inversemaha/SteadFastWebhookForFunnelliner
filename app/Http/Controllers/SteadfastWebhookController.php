@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Routing\Controller;
 
 class SteadfastWebhookController extends Controller
@@ -27,6 +28,9 @@ class SteadfastWebhookController extends Controller
         try {
             $validatedPayloadData = $this->validatePayload($request);
             $this->processPayload($validatedPayloadData);
+            
+            //Log success response
+            Log::info('Steadfast webhook processed successfully.', $validatedPayloadData);
 
             return response()->json([
                 'status' => 'success',

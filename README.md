@@ -25,7 +25,7 @@ Run migrations to create orders table:
 php artisan migrate
 ```
 
-### 3. Webhook URL
+### 3. Ngrok URL
 Configure this endpoint in your Steadfast dashboard:
 ```
 https://brittany-uneduced-laurinda.ngrok-free.dev/api/webhooks/steadfast
